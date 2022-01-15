@@ -1,13 +1,6 @@
 # ChatBot MultiAgents Systems
 Repository dedicated to the chatbot made for Multiagents Sistems practice in 2021.
 
-## Protocols used:
-Each protocol used will be explained in detail in the PDF Memoria.pdf
-
-fipa-request-protocol -> From FIPA standards (http://www.fipa.org/repository/ips.php3)
-
-qr_gen : Used in the QR Generation behaviour to create a QR Code and let the client know that it needs to copy de file.
-
 ## Regular Expressions used to recognize commands:
 - QRGenerator: If 'qr' is in the message received, executes the QR Generation behaviour with the first URL found in the message.
 
