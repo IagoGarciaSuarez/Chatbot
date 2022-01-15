@@ -15,7 +15,7 @@ logfile.setFormatter(logsformat)
 
 stream = logging.StreamHandler()
 streamformat = logging.Formatter("%(levelname)s:%(module)s:%(message)s")
-stream.setLevel(logging.DEBUG)
+stream.setLevel(logging.WARNING)
 stream.setFormatter(streamformat)
 
 logs.addHandler(logfile)
@@ -38,6 +38,8 @@ Except for this help command and the termination one, I don't have predefined co
 You just need to speak to me and ask me for what you need, I'll try my best!
 
 """
+
+executing = True
 
 class SenderAgent(Agent):
     async def setup(self):
@@ -67,7 +69,7 @@ class InformBehav(CyclicBehaviour):
             await self.send(msg)
             logs.info(f'Command \'{command}\' sent. Waiting for reply...')
 
-            msg = await self.receive(timeout=5)
+            msg = await self.receive(timeout=10)
             if msg:
                 logs.info(f"Received message with protocol '{msg.metadata['protocol']}'.")
                 if msg.metadata["protocol"] == "qr_gen":
@@ -82,6 +84,7 @@ class InformBehav(CyclicBehaviour):
 
 class TerminateExecutionBehav(OneShotBehaviour):
     async def run(self):
+        global executing
         msg = Message(to=data['chatbot_server']['username'])
         msg.set_metadata("performative", "inform")            
         msg.body = 'exit'
@@ -89,6 +92,7 @@ class TerminateExecutionBehav(OneShotBehaviour):
 
         logs.info("Terminating execution...")
         await self.agent.stop()
+        executing = False
         logs.info("Agent finished execution.")
 
 def main():
@@ -99,7 +103,7 @@ def main():
                             data['chatbot_client']['password'])
     senderagent.start()
     
-    while 1:
+    while executing:
         try:
             time.sleep(1)
         except KeyboardInterrupt:

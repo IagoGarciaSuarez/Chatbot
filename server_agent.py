@@ -18,13 +18,13 @@ logsformat = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
 logfile = logging.FileHandler('chatbot_server.log')
 logfile.setFormatter(logsformat)
 
-stream = logging.StreamHandler()
-streamformat = logging.Formatter("%(levelname)s:%(module)s:%(message)s")
-stream.setLevel(logging.DEBUG)
-stream.setFormatter(streamformat)
+# stream = logging.StreamHandler()
+# streamformat = logging.Formatter("%(levelname)s:%(module)s:%(message)s")
+# stream.setLevel(logging.DEBUG)
+# stream.setFormatter(streamformat)
 
 logs.addHandler(logfile)
-logs.addHandler(stream)
+# logs.addHandler(stream)
 
 f = open('credentials.json',)
 data = json.load(f)
@@ -49,8 +49,6 @@ class ReceiverAgent(Agent):
         template = Template()
         template.set_metadata("performative", "request")
 
-        # Adding the Behaviour with the template will filter all the msg
-        # self.add_behaviour(b, template)
         self.add_behaviour(TerminateExecutionBehav(), terminate_template)
         self.add_behaviour(RecvBehav(), template)
 
@@ -164,6 +162,9 @@ class PersonInfoBehav(OneShotBehaviour):
             logs.error("An unexpected error ocurred while performing the search.")
             msg.set_metadata("performative", "failure")
             msg.body = "An unexpected error ocurred while performing the search."
+            await self.send(msg)
+            self.kill()
+            return
 
         await self.send(msg)
 
@@ -188,10 +189,22 @@ class CreateFileBehav(OneShotBehaviour):
             f = open(file_name, "x")
             f.close()
 
+        except FileExistsError:
+            logs.error("File creation attempted but a file with that name already exists.")
+            msg.set_metadata("performative", "refuse")
+            msg.body = "A file with that name already exists."
+            await self.send(msg)
+            self.kill()
+            return
+
         except:
             logs.error("An unexpected error ocurred while creating the file.")
             msg.set_metadata("performative", "failure")
             msg.body = "An unexpected error ocurred while creating the file."
+            await self.send(msg)
+            self.kill()
+            return
+            
 
         msg.body = f'File {file_name} created.'
         await self.send(msg)
@@ -232,6 +245,9 @@ class GenerateQR(OneShotBehaviour):
             msg.set_metadata("performative", "failure")
             msg.set_metadata("protocol", "fipa-request-protocol")
             msg.body = "An unexpected error ocurred while generating QR Code."
+            await self.send(msg)
+            self.kill()
+            return
 
 
         await self.send(msg)
@@ -276,6 +292,9 @@ class GetWeatherBehav(OneShotBehaviour):
             logs.error("An unexpected error ocurred while retrieving weather data.")
             msg.set_metadata("performative", "failure")
             msg.body = "An unexpected error ocurred while retrieving weather data."
+            await self.send(msg)
+            self.kill()
+            return
 
         await self.send(msg)
         city = None
